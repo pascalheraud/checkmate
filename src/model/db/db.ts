@@ -13,6 +13,10 @@ export interface Identified<T> {
   id: ID<T>;
 }
 
+export interface IdentifiedNamed<T> extends Identified<T> {
+  name: string;
+}
+
 export async function createDBObject<T extends Identified<T>>(
   source: Promise<Identified<T>[]>,
   obj: T

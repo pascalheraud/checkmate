@@ -1,64 +1,61 @@
 "use client";
+import ItemsList from "@/components/itemslist";
 import { deleteTemplateGroup } from "@/model/db/template/group";
-import { getChecklistTemplateWithGroups } from "@/model/db/template/template";
+import { getCTemplateWithGroups } from "@/model/db/template/template";
 import {
-  ChecklistTemplateGroup,
-  ChecklistTemplateId,
-  ChecklistTemplateWithGroups,
+  TemplateGroup,
+  TemplateGroupWithInfo,
+  TemplateId,
+  TemplateWithGroups,
 } from "@/model/model";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function Template({
   params,
 }: {
-  params: Promise<{ templateId: ChecklistTemplateId }>;
+  params: Promise<{ templateId: TemplateId }>;
 }) {
-  const [template, setTemplate] = useState<ChecklistTemplateWithGroups>();
+  const [template, setTemplate] = useState<TemplateWithGroups>();
   useEffect(() => {
     const action = async () => {
-      setTemplate(await getChecklistTemplateWithGroups((await params).templateId));
+      setTemplate(
+        await getCTemplateWithGroups((await params).templateId)
+      );
     };
     action();
   }, [params]);
 
-  function GroupList({ groups }: { groups: ChecklistTemplateGroup[] }) {
-    return groups.map((group: ChecklistTemplateGroup) => (
-      <li key={group.id}>
-        Name: {group.name}
-        &nbsp;
-        <Link href={`/templates/template/${template!.id}/groups/group/${group.id}/get`}>Voir</Link>
-        &nbsp;
-        <button
-          onClick={async () => {
-            const groups = await deleteTemplateGroup(template!.id, group.id);
-            setTemplate({ ...template!, groups: groups });
-          }}
-        >
-          Suppr
-        </button>
-      </li>
-    ));
+  async function deleteGroup(
+    group: TemplateGroupWithInfo
+  ): Promise<void> {
+    const groups = await deleteTemplateGroup(template!.id, group.id);
+    setTemplate({ ...template!, groups: groups });
+  }
+
+  function isDeletableGroup(template: TemplateGroupWithInfo): boolean {
+    return !template.hasItems;
   }
 
   function Groups() {
     if (template) {
       return (
-        <span>
-          <ul className="list-disc">
-            <GroupList groups={template.groups} />
-          </ul>
-          <Link href={`/templates/template/${template?.id}/groups/new`}>New group</Link>
-        </span>
+        <ItemsList
+          viewLink={(group: TemplateGroup) =>
+            `/templates/template/${template!.id}/groups/group/${group.id}/get`
+          }
+          newLink={`/templates/template/${template!.id}/groups/new`}
+          items={template!.groups}
+          deleteItem={deleteGroup}
+          itemsLabel={`Template "${template.name}" Groups`}
+          isDeletable={isDeletableGroup}
+          modalLabel="This Group has at least one item and cannot be removed"
+          removableTitle="Remove the group"
+          newLabel="New Group"
+          unremovableTitle="This Group has at least one item"
+        />
       );
     } else return;
   }
 
-  return (
-    <div>
-      <h1>Template details {template?.name}</h1>
-      <br />
-      <Groups />
-    </div>
-  );
+  return <Groups />;
 }

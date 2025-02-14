@@ -1,28 +1,22 @@
 "use client";
-import { useState } from "react";
-import { createChecklistTemplate } from "@/model/db/template/template";
+import NameForm from "@/components/nameform";
+import { createTemplate } from "@/model/db/template/template";
 import { useRouter } from "next/navigation";
 
 export default function NewTemplate() {
-  const [name, setName] = useState("");
   const router = useRouter();
 
-  async function create() {
-    await createChecklistTemplate({ name: name });
+  async function create(name: string) {
+    await createTemplate({ name: name });
     router.push("/");
   }
 
   return (
-    <form>
-      Nom :{" "}
-      <input
-        placeholder="nom"
-        type="text"
-        name="name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input type="button" onClick={create} value="GO" />
-    </form>
+    <NameForm
+      label="Template name"
+      placeHolder="Awesome template name"
+      submit="Create template"
+      onSubmit={create}
+    />
   );
 }

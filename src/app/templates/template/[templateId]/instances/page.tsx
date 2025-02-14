@@ -1,13 +1,13 @@
 "use client";
 import { getChecklists } from "@/model/db/checklist/checklist";
-import { Checklist, ChecklistTemplateId } from "@/model/model";
+import { Checklist, TemplateId } from "@/model/model";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function Checklists({
   params,
 }: {
-  params: Promise<{ templateId: ChecklistTemplateId }>;
+  params: Promise<{ templateId: TemplateId }>;
 }) {
   const [checklists, setChecklists] = useState<Checklist[]>();
   useEffect(() => {

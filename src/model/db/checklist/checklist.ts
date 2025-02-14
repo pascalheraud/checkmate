@@ -8,18 +8,18 @@ import {
   ChecklistId,
   ChecklistItem,
   ChecklistStatus,
-  ChecklistTemplateGroup,
-  ChecklistTemplateId,
-  ChecklistTemplateItem,
+  TemplateGroup,
+  TemplateId,
+  TemplateItem,
 } from "@/model/model";
 import {
   getTemplateGroupItems,
   getTemplateItem,
 } from "@/model/db/template/item";
-import { getChecklistTemplate } from "../template/template";
+import { getTemplate } from "../template/template";
 
 interface NewChecklist {
-  templateId: ChecklistTemplateId;
+  templateId: TemplateId;
 }
 
 interface Status {
@@ -45,7 +45,7 @@ interface CreatedChecklistItem
     Identified<ChecklistItem> {}
 
 export async function createChecklist(
-  templateId: ChecklistTemplateId,
+  templateId: TemplateId,
   name: string
 ): Promise<CreatedChecklist> {
   const checklist = await createDBObject(
@@ -56,40 +56,40 @@ export async function createChecklist(
   );
 
   const templateGroups = await getTemplateGroups(templateId);
-  templateGroups.forEach(async (templateGroup) => {
+  for (const templateGroup of templateGroups) {
     await createGroup(checklist.id, templateGroup);
-  });
+  }
 
   return checklist;
 }
 
 export async function createGroup(
   checklistId: ChecklistId,
-  templateGroup: ChecklistTemplateGroup
+  templateGroup: TemplateGroup
 ): Promise<CreatedChecklistGroup> {
   const group = await createDBObject(
     sql<
       ChecklistGroup[]
-    >`INSERT INTO checklist_group(checklist_id, checklist_template_group_id, status) values (${checklistId},${templateGroup.id},'KO') RETURNING Id`,
+    >`INSERT INTO checklist_group(checklist_id, template_group_id, status) values (${checklistId},${templateGroup.id},'KO') RETURNING Id`,
     {} as CreatedChecklistGroup
   );
 
   const templateItems = await getTemplateGroupItems(templateGroup.id);
-  templateItems.forEach(async (templateItem) => {
+  for (const templateItem of templateItems) {
     await createItem(group.id, templateItem);
-  });
+  }
 
   return group;
 }
 
 export async function createItem(
   groupId: ChecklistGroupId,
-  templateItem: ChecklistTemplateItem
+  templateItem: TemplateItem
 ): Promise<CreatedChecklistItem> {
   const item = await createDBObject(
     sql<
       ChecklistItem[]
-    >`INSERT INTO checklist_item(checklist_group_id, checklist_template_item_id, status) values (${groupId},${templateItem.id},'KO') RETURNING Id`,
+    >`INSERT INTO checklist_item(checklist_group_id, template_item_id, status) values (${groupId},${templateItem.id},'KO') RETURNING Id`,
     {} as CreatedChecklistItem
   );
   return item;
@@ -105,7 +105,7 @@ export async function getChecklistWithGroups(
   id: ChecklistId
 ): Promise<Checklist> {
   const checklist = await getChecklist(id);
-  checklist.templateChecklist = await getChecklistTemplate(
+  checklist.templateChecklist = await getTemplate(
     checklist.templateId
   );
   checklist.groups = await getChecklistGroupsWithItems(id);
@@ -126,15 +126,15 @@ export async function getChecklistGroupsWithItems(
 ): Promise<ChecklistGroup[]> {
   const groups = await getChecklistGroups(checklistId);
 
-  groups.forEach(async (group) => {
+  for (const group of groups) {
     group.templateGroup = await getTemplateGroup(
-      group.checklistTemplateGroupId
+      group.templateGroupId
     );
     group.items = await getChecklistGroupItems(group.id);
-    group.items.forEach(async (item) => {
-      item.templateItem = await getTemplateItem(item.checklistTemplateItemId);
-    });
-  });
+    for (const item of group.items) {
+      item.templateItem = await getTemplateItem(item.templateItemId);
+    }
+  }
 
   return groups;
 }
@@ -148,7 +148,7 @@ export async function getChecklistGroupItems(
 }
 
 export async function getChecklists(
-  id: ChecklistTemplateId
+  id: TemplateId
 ): Promise<Checklist[]> {
   return await sql<
     Checklist[]

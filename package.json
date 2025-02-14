@@ -13,11 +13,13 @@
   "dependencies": {
     "@tailwindcss/postcss": "^4.0.6",
     "autoprefixer": "^10.4.20",
+    "flowbite-react": "^0.10.2",
     "liquibase": "^4.28.1",
     "next": "15.1.7",
     "postgres": "^3.4.5",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-icons": "^5.4.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

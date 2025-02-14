@@ -1,10 +1,11 @@
 "use server";
 import { createDBObject, getDBObject, Identified, sql } from "@/model/db/db";
 import {
-  ChecklistTemplateGroup,
-  ChecklistTemplateGroupId,
-  ChecklistTemplateGroupWithItems,
-  ChecklistTemplateId,
+  TemplateGroup,
+  TemplateGroupId,
+  TemplateGroupWithInfo,
+  TemplateGroupWithItems,
+  TemplateId,
 } from "../../model";
 import { getTemplateGroupItems } from "./item";
 
@@ -13,51 +14,54 @@ export interface NewTemplateGroup {
 }
 interface CreatedTemplateGroup
   extends NewTemplateGroup,
-    Identified<ChecklistTemplateGroup> {}
+    Identified<TemplateGroup> {}
 
 export async function getTemplateGroups(
-  templateId: ChecklistTemplateId
-): Promise<ChecklistTemplateGroup[]> {
+  templateId: TemplateId
+): Promise<TemplateGroupWithInfo[]> {
   return await sql<
-    ChecklistTemplateGroup[]
-  >`SELECT * FROM checklist_template_group where checklist_template_id=${templateId}`;
+    TemplateGroupWithInfo[]
+  >`  SELECT ctg.*,
+        exists (select 1 from template_item it where ctg.id = it.template_group_id) as has_items
+      FROM template_group ctg
+      WHERE template_id=${templateId}`;
 }
 
 export async function getTemplateGroup(
-  id: ChecklistTemplateGroupId
-): Promise<ChecklistTemplateGroup> {
+  id: TemplateGroupId
+): Promise<TemplateGroup> {
   return getDBObject(
     sql<
-      ChecklistTemplateGroup[]
-    >`SELECT * FROM checklist_template_group where id=${id}`
+      TemplateGroup[]
+    >`SELECT * FROM template_group where id=${id}`
   );
 }
 export async function createTemplateGroup(
-  templateId: ChecklistTemplateId,
+  templateId: TemplateId,
   group: NewTemplateGroup
 ): Promise<CreatedTemplateGroup> {
   return await createDBObject(
     sql<
-      ChecklistTemplateGroup[]
-    >`INSERT INTO checklist_template_group(name, checklist_template_id) values (${group.name},${templateId}) RETURNING Id`,
+      TemplateGroup[]
+    >`INSERT INTO template_group(name, template_id) values (${group.name},${templateId}) RETURNING Id`,
     group as CreatedTemplateGroup
   );
 }
 
 export async function deleteTemplateGroup(
-  templateId: ChecklistTemplateId,
-  groupId: ChecklistTemplateGroupId
-): Promise<ChecklistTemplateGroup[]> {
-  await sql`DELETE FROM checklist_template_group where id=${groupId}`;
+  templateId: TemplateId,
+  groupId: TemplateGroupId
+): Promise<TemplateGroupWithInfo[]> {
+  await sql`DELETE FROM template_group where id=${groupId}`;
   return getTemplateGroups(templateId);
 }
 
 export async function getGroupsWithItems(
-  groupId: ChecklistTemplateGroupId
-): Promise<ChecklistTemplateGroupWithItems> {
+  groupId: TemplateGroupId
+): Promise<TemplateGroupWithItems> {
   const group = (await getTemplateGroup(
     groupId
-  )) as ChecklistTemplateGroupWithItems;
+  )) as TemplateGroupWithItems;
   group.items = await getTemplateGroupItems(groupId);
   return group;
 }

@@ -1,20 +1,20 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChecklistTemplateId } from "@/model/model";
+import { TemplateId } from "@/model/model";
 import { createChecklist } from "@/model/db/checklist/checklist";
-import { getChecklistTemplate } from "@/model/db/template/template";
+import { getTemplate } from "@/model/db/template/template";
 
 export default function ChecklistIntanciate({
   params,
 }: {
-  params: Promise<{ templateId: ChecklistTemplateId }>;
+  params: Promise<{ templateId: TemplateId }>;
 }) {
   const [name, setName] = useState("");
   const router = useRouter();
   useEffect(() => {
     const action = async () => {
-      const template = await getChecklistTemplate((await params).templateId);
+      const template = await getTemplate((await params).templateId);
       setName("Instance de " + template.name);
     };
     action();

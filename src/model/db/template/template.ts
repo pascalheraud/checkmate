@@ -1,44 +1,66 @@
 "use server";
 import { createDBObject, getDBObject, Identified, sql } from "../db";
-import { ChecklistTemplate, ChecklistTemplateId, ChecklistTemplateWithGroups } from "../../model";
+import {
+  Template as Template,
+  TemplateId as TemplateId,
+  TemplateWithGroups as TemplateWithGroups,
+} from "../../model";
 import { getTemplateGroups } from "./group";
 
 interface NewTemplate {
   name: string;
 }
 
-interface CreatedTemplate extends NewTemplate, Identified<ChecklistTemplate> {}
+export interface TemplateWithInfo extends Template {
+  hasInstances: boolean;
+  hasGroups: boolean;
+}
 
-export async function createChecklistTemplate(
+interface CreatedTemplate extends NewTemplate, Identified<Template> {}
+
+export async function createTemplate(
   template: NewTemplate
 ): Promise<CreatedTemplate> {
   return await createDBObject(
     sql<
-    ChecklistTemplate[]
-    >`INSERT INTO checklist_template(name) values (${template.name}) RETURNING Id`,
+      Template[]
+    >`INSERT INTO template(name) values (${template.name}) RETURNING Id`,
     template as CreatedTemplate
   );
 }
 
-export async function getAllChecklistTemplates(): Promise<ChecklistTemplate[]> {
-  return await sql<ChecklistTemplate[]>`SELECT * FROM checklist_template`;
+export async function getAllTemplates(): Promise<
+  TemplateWithInfo[]
+> {
+  return await sql<
+    TemplateWithInfo[]
+  >`SELECT * ,
+      exists (select 1 from checklist c where c.template_id = t.id) as has_instances,
+      exists (select 1 from template_group tc where tc.template_id = t.id) as has_groups
+    FROM template t`;
 }
 
-export async function deleteChecklistTemplate(id: ChecklistTemplateId): Promise<ChecklistTemplate[]> {
-  await sql`DELETE FROM checklist_template where id=${id}`;
-  return getAllChecklistTemplates();
+export async function deleteTemplate(
+  id: TemplateId
+): Promise<TemplateWithInfo[]> {
+  await sql`DELETE FROM template where id=${id}`;
+  return getAllTemplates();
 }
 
-export async function getChecklistTemplate(id: ChecklistTemplateId): Promise<ChecklistTemplate> {
+export async function getTemplate(
+  id: TemplateId
+): Promise<Template> {
   return getDBObject(
-    sql<ChecklistTemplate[]>`SELECT * FROM checklist_template where id=${id}`
+    sql<Template[]>`SELECT * FROM template where id=${id}`
   );
 }
 
-export async function getChecklistTemplateWithGroups(
-  id: ChecklistTemplateId
-): Promise<ChecklistTemplateWithGroups> {
-  const template = (await getChecklistTemplate(id)) as ChecklistTemplateWithGroups;
+export async function getCTemplateWithGroups(
+  id: TemplateId
+): Promise<TemplateWithGroups> {
+  const template = (await getTemplate(
+    id
+  )) as TemplateWithGroups;
   template.groups = await getTemplateGroups(id);
   return template;
 }

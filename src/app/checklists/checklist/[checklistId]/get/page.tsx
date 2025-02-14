@@ -2,6 +2,7 @@
 import { getChecklistWithGroups } from "@/model/db/checklist/checklist";
 import { Checklist, ChecklistId } from "@/model/model";
 import { useEffect, useState } from "react";
+import { Alert } from "flowbite-react";
 
 export default function ChecklistEdit({
   params,
@@ -19,17 +20,18 @@ export default function ChecklistEdit({
   function Groups() {
     if (checklist) {
       return checklist.groups.map((group) => (
-        <div key={group.id}>
-          {group.templateGroup.name}
-          <br />
-          {group.items.map((item) => (
-            <div key={item.id}>
-              Group : {item.templateItem.name}
-              <br />
-              {item.status}
-            </div>
-          ))}
-        </div>
+        <li key={group.id} className="list-disc ">
+            Group : {group.templateGroup.name} Status : {group.status}
+            <br /> 
+            <ul className="list-disc pl-6">
+              {group.items.map((item) => (
+                <li key={item.id}>
+                  Item : {item.templateItem.name}
+                  &nbsp; Status : {item.status}
+                </li>
+              ))}
+            </ul>
+        </li>
       ));
     } else {
       return;
@@ -40,7 +42,10 @@ export default function ChecklistEdit({
     <div>
       Checklist {checklist?.name}
       <br />
-      <Groups />
+      <ul className="list-disc">
+        <Groups />
+        <Alert color="info">Alert!</Alert>
+      </ul>
     </div>
   );
 }
